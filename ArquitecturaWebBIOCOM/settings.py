@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
+
+JWT_ACCESS_TOKEN = config('JWT_ACCESS_TOKEN')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,6 +27,8 @@ SECRET_KEY = 'django-insecure-=vt05=lb!lbb!)xp+!a=j$=ph@-m&v1j2x-vot4&btc4o^zco+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+MANUAL_JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0NjAzNTE3LCJpYXQiOjE3NTQ2MDMyMTcsImp0aSI6IjQ2NzBkZjM1ZjAyNDQzYzRhOGRiYzg5M2NhNWE3Yzk2IiwidXNlcl9pZCI6IjEiLCJ1c2VybmFtZSI6IkplZmVyRGFyaW8ifQ.nAiJDmt3zRqMcu8LICFL_1739TPKvFKU9AHn06DtnXg" 
 
 ALLOWED_HOSTS = []
 
@@ -42,6 +47,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'rest_framework_simplejwt.token_blacklist',
     'accounts',
+    'datasets',
 ]
 
 MIDDLEWARE = [
@@ -99,6 +105,12 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Ruta absoluta en disco donde se guardarán los archivos subidos
+MEDIA_ROOT = BASE_DIR / 'var/data'
+
+# URL pública para acceder a esos archivos
+MEDIA_URL = '/datasets/'
 
 
 # Password validation
