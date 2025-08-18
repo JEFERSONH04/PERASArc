@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-=vt05=lb!lbb!)xp+!a=j$=ph@-m&v1j2x-vot4&btc4o^zco+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-MANUAL_JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0NjAzNTE3LCJpYXQiOjE3NTQ2MDMyMTcsImp0aSI6IjQ2NzBkZjM1ZjAyNDQzYzRhOGRiYzg5M2NhNWE3Yzk2IiwidXNlcl9pZCI6IjEiLCJ1c2VybmFtZSI6IkplZmVyRGFyaW8ifQ.nAiJDmt3zRqMcu8LICFL_1739TPKvFKU9AHn06DtnXg" 
+MANUAL_JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1Mzk0ODM1LCJpYXQiOjE3NTUzOTEyMzUsImp0aSI6IjVhNWMyMzlhZTQ1ZDRlMGM4MzU5NDVlMzdkNmVlODIxIiwidXNlcl9pZCI6IjEiLCJ1c2VybmFtZSI6IkplZmVyRGFyaW8ifQ.XTO3OoJjQaGifnVutg0RJqwHCybhk1ZnGUFG96fBANI" 
 
 ALLOWED_HOSTS = []
 
@@ -43,11 +43,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
     'drf_spectacular',
     'rest_framework_simplejwt.token_blacklist',
     'accounts',
     'datasets',
+    'preprocessing',
+    "django_celery_results",
+    "django_celery_beat",
 ]
 
 MIDDLEWARE = [
@@ -65,12 +69,18 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
+  'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+  'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+  'ROTATE_REFRESH_TOKENS': True,
+  'BLACKLIST_AFTER_ROTATION': True,
+  'AUTH_HEADER_TYPES': ('Bearer','JWT'),    # prefijos aceptados
+  # 'ALGORITHM': 'HS256', 'SIGNING_KEY': SECRET_KEY, …  
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -96,6 +106,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ArquitecturaWebBIOCOM.wsgi.application'
 
 
+
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
@@ -111,6 +122,46 @@ MEDIA_ROOT = BASE_DIR / 'var/data'
 
 # URL pública para acceder a esos archivos
 MEDIA_URL = '/datasets/'
+
+# broker apuntando a varios maestros para failover
+CELERY_BROKER_URL = "sentinel://127.0.0.1:26380/0"
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "master_name": "mymaster",
+    "sentinels": [
+        ("127.0.0.1", 26380),
+        ("127.0.0.1", 26381),
+        ("127.0.0.1", 26382),
+    ],
+}
+
+CELERY_TASK_ALWAYS_EAGER = False
+CELERY_TASK_EAGER_PROPAGATES = False
+
+
+
+# Usamos Redis también como backend de resultados si no usas django-db
+# CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'default'
+CELERY_TASK_SERIALIZER    = 'json'
+CELERY_RESULT_SERIALIZER  = 'json'
+CELERY_ACCEPT_CONTENT     = ['json']
+
+# Evitar pérdida de tareas
+CELERY_TASK_ACKS_LATE           = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+
+# Solo prefetch una tarea a la vez por worker
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+# Concurrencia basada en CPUs
+import multiprocessing
+CELERY_WORKER_CONCURRENCY = multiprocessing.cpu_count()
+
+# Timeouts razonables
+CELERY_TASK_TIME_LIMIT      = 300
+CELERY_TASK_SOFT_TIME_LIMIT = 240
+
 
 
 # Password validation

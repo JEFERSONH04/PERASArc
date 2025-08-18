@@ -66,8 +66,8 @@ class DatasetSerializer(serializers.ModelSerializer):
         - Tamaño máximo 10 MB.
         """
         file_obj = attrs.get('file')
-        max_size_mb = 10240
-        if file_obj.size > max_size_mb:
+        max_size_mb = 150
+        if file_obj.size > max_size_mb * 1024 * 1024:
             raise serializers.ValidationError(
                 f"El archivo no puede superar {max_size_mb} MB."
             )
