@@ -3,7 +3,10 @@ __pycache__/
 db.sqlite3
 var/data/datasets/
 var/data/preprocessed
+var/data/results
+var/models
 preprocessing/test
 pytest.ini
 run_task.py
+
 .env

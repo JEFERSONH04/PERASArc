@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-=vt05=lb!lbb!)xp+!a=j$=ph@-m&v1j2x-vot4&btc4o^zco+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-MANUAL_JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1Mzk0ODM1LCJpYXQiOjE3NTUzOTEyMzUsImp0aSI6IjVhNWMyMzlhZTQ1ZDRlMGM4MzU5NDVlMzdkNmVlODIxIiwidXNlcl9pZCI6IjEiLCJ1c2VybmFtZSI6IkplZmVyRGFyaW8ifQ.XTO3OoJjQaGifnVutg0RJqwHCybhk1ZnGUFG96fBANI" 
+MANUAL_JWT_TOKEN = "" 
 
 ALLOWED_HOSTS = []
 
@@ -42,16 +42,23 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    #API REST para comunicar los servicios
     'rest_framework',
     'rest_framework_simplejwt',
+    #Documentacion de la API 
     'corsheaders',
     'drf_spectacular',
+    #Servicio de autenticacion
     'rest_framework_simplejwt.token_blacklist',
     'accounts',
+    #Servicio de Datasets
     'datasets',
+    #Procesamiento asincrono
     'preprocessing',
     "django_celery_results",
     "django_celery_beat",
+    #Servicio de Analisis
+    "analysis",
 ]
 
 MIDDLEWARE = [
@@ -71,11 +78,16 @@ REST_FRAMEWORK = {
     ),
     
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PARSER_CLASSES': [
+    'rest_framework.parsers.JSONParser',
+    'rest_framework.parsers.FormParser',
+    'rest_framework.parsers.MultiPartParser',
+    ]
 }
 from datetime import timedelta
 
 SIMPLE_JWT = {
-  'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+  'ACCESS_TOKEN_LIFETIME': timedelta(minutes=180),
   'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
   'ROTATE_REFRESH_TOKENS': True,
   'BLACKLIST_AFTER_ROTATION': True,
@@ -118,7 +130,7 @@ DATABASES = {
 }
 
 # Ruta absoluta en disco donde se guardarán los archivos subidos
-MEDIA_ROOT = BASE_DIR / 'var/data'
+MEDIA_ROOT = BASE_DIR / 'var'
 
 # URL pública para acceder a esos archivos
 MEDIA_URL = '/datasets/'

@@ -20,7 +20,7 @@ class MetaData(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='datasets')
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    file = models.FileField(upload_to='datasets/') #colocar la ruta asignada para los datasets
+    file = models.FileField(upload_to='data/datasets/') #colocar la ruta asignada para los datasets
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
