@@ -6,9 +6,11 @@ analysis/models.py
 Define los modelos para representar modelos de machine learning y
 los resultados de análisis asociados a un dataset.
 """
-
 from django.db import models
 from django.conf import settings
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class MLModel(models.Model):
     """
@@ -17,7 +19,6 @@ class MLModel(models.Model):
 
     Atributos:
         name (str): Nombre descriptivo del modelo.
-        description (str): Explicación opcional sobre el propósito del modelo.
         created_at (datetime): Fecha y hora de creación del registro.
         updated_at (datetime): Fecha y hora de última actualización.
     """
@@ -107,4 +108,41 @@ class AnalysisResult(models.Model):
     error_message = models.TextField(null=True, blank=True)
     created_at    = models.DateTimeField(auto_now_add=True)
     updated_at    = models.DateTimeField(auto_now=True)
+    completed_at  = models.DateTimeField(null=True, blank=True)  
 
+class MapeoResultado(models.Model):
+    """
+    Mapea el valor numérico de una predicción a una etiqueta de texto legible.
+    """
+    model = models.ForeignKey(MLModel, on_delete=models.CASCADE)
+    valor_prediccion = models.IntegerField(
+        help_text="Valor numérico de la predicción (ej. 0, 1, 2)."
+    )
+    etiqueta_texto = models.CharField(
+        max_length=100,
+        help_text="Texto descriptivo para la predicción (ej. 'Setosa', 'Riesgo Alto')."
+    )
+    
+    class Meta:
+        unique_together = (('model', 'valor_prediccion'),)
+        verbose_name = "Mapeo de Resultado"
+        verbose_name_plural = "Mapeos de Resultados"
+
+    def __str__(self):
+        return f"{self.model.name} | {self.valor_prediccion} -> {self.etiqueta_texto}"
+
+class UserAnalysis(models.Model):
+    """
+    Asocia un análisis con el usuario que lo ejecutó,
+    garantizando que cada usuario solo acceda a sus propios resultados.
+    """
+    analysis = models.ForeignKey(AnalysisResult, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    class Meta:
+        unique_together = (('analysis', 'user'),)
+        verbose_name = "Análisis de Usuario"
+        verbose_name_plural = "Análisis de Usuarios"
+
+    def __str__(self):
+        return f"Análisis {self.analysis.id} de {self.user.username}"

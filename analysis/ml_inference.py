@@ -4,11 +4,11 @@ import os
 import pandas as pd
 from django.conf import settings
 from .adapters import ADAPTERS
+from django.utils.text import slugify
 
 def load_dataset(path):
     """
     - Si son CSV, carga con pandas.
-    - Si son imágenes, prepara un array NumPy.
     """
     ext = os.path.splitext(path)[1].lower()
     if ext == '.csv':
@@ -16,7 +16,7 @@ def load_dataset(path):
     # otros casos…
     raise ValueError(f"Formato de dataset no soportado: {ext}")
 
-def execute(model_path, framework, dataset_path, parameters):
+def execute(model_path, framework, dataset_path, parameters, analysis_id):
     """
     1. Selecciona adaptador según framework.
     2. Abre el archivo de modelo (file-like).
@@ -47,10 +47,22 @@ def execute(model_path, framework, dataset_path, parameters):
         # puedes añadir accuracy, RMSE, etc., si cuentas con ground-truth
     }
 
-    # 5. Guarda salida
+    # 1) Directorio de salida
     out_dir = os.path.join(settings.MEDIA_ROOT, 'data/results')
     os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, f"out_{os.path.basename(model_path)}.json")
+
+    # 2) Sanear el nombre del modelo
+    #    Ej: model_path="/…/My Model v2.pkl" → base_name="My Model v2"
+    base_name  = os.path.splitext(os.path.basename(model_path))[0]
+    model_slug = slugify(base_name)  # "my-model-v2"
+
+    # 3) Construir el filename según el id del análisis si viene
+    if analysis_id:
+        filename = f"out_{model_slug}_{analysis_id}.json"
+    else:
+        filename = f"out_{model_slug}.json"
+
+    out_path = os.path.join(out_dir, filename)
     with open(out_path, 'w') as fp:
         import json; json.dump(predictions, fp)
 

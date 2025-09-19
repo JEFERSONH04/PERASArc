@@ -1,6 +1,7 @@
 # analysis/tasks.py
 
 from celery import shared_task
+from django.utils import timezone
 from .models import AnalysisResult
 from .ml_inference import execute
 import logging
@@ -37,8 +38,10 @@ def launch_analysis_task(self, analysis_id):
             framework=analysis.model.framework,
             dataset_path=analysis.dataset.file.path,
             parameters={"inputs": vector},
+            analysis_id=analysis.id
         )
         status = "SUCCESS"
+        analysis.completed_at = timezone.now()
     except Exception as exc:
                 # Esto vuelca el stack trace en los logs
         logger.exception("Error al ejecutar execute() para AnalysisResult %s", analysis_id)
@@ -51,4 +54,4 @@ def launch_analysis_task(self, analysis_id):
     analysis.metrics     = metrics
     analysis.output_path = output_path
     analysis.status      = status
-    analysis.save(update_fields=["metrics", "output_path", "status"])
+    analysis.save(update_fields=["metrics", "output_path", "status", "completed_at", "error_message"])

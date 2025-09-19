@@ -4,13 +4,15 @@ from django.shortcuts import render
 
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 from rest_framework.permissions import AllowAny
-from .serializadores import RegisterSerializer, LoginSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+from .serializadores import RegisterSerializer,  PasswordResetRequestSerializer, PasswordResetConfirmSerializer, MyTokenObtainPairSerializer
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 User = get_user_model()
@@ -20,8 +22,42 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
 
-class LoginView(TokenObtainPairView):
-    serializer_class = LoginSerializer
+class LoginWithSessionView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        # 1. Generar JWT (access y refresh)
+        response = super().post(request, *args, **kwargs)
+
+        # 2. Autenticar al usuario en la sesión de Django
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            # Django añadirá automáticamente Set-Cookie: sessionid=…
+        return response
+
+class LogoutView(APIView):
+    """
+    Destruye la sesión de Django y elimina la cookie de JWT
+    """
+    permission_classes = []  # O IsAuthenticated para protegerla
+
+    def post(self, request, *args, **kwargs):
+        # 1. Logout de Django: destruye la sesión y rota sessionid
+        logout(request)
+        request.session.flush()  # Asegura que la sesión se invalida
+
+        # 2. Construir respuesta y eliminar cookies
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+
+        # Borra la cookie de sesión de Django
+        response.delete_cookie('sessionid', path='/', domain=None)
+        # Borra la cookie donde guardamos el JWT
+        response.delete_cookie('jwt', path='/', domain=None)
+
+        return response
 
 class RefreshView(TokenRefreshView):
     permission_classes = [permissions.AllowAny]

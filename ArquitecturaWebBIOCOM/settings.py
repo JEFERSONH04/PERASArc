@@ -9,9 +9,11 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import os
 from pathlib import Path
 from decouple import config
+import matplotlib
+matplotlib.use('Agg')
 
 JWT_ACCESS_TOKEN = config('JWT_ACCESS_TOKEN')
 
@@ -42,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
     #API REST para comunicar los servicios
     'rest_framework',
     'rest_framework_simplejwt',
@@ -59,9 +62,11 @@ INSTALLED_APPS = [
     "django_celery_beat",
     #Servicio de Analisis
     "analysis",
+    #Canales para mensaajes en tiempo real
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -69,14 +74,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PARSER_CLASSES': [
     'rest_framework.parsers.JSONParser',
@@ -103,7 +108,9 @@ ROOT_URLCONF = 'ArquitecturaWebBIOCOM.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+          BASE_DIR / 'templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -116,7 +123,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'ArquitecturaWebBIOCOM.wsgi.application'
-
+ASGI_APPLICATION = 'ArquitecturaWebBIOCOM.asgi.application'
 
 
 # Database
@@ -174,6 +181,21 @@ CELERY_WORKER_CONCURRENCY = multiprocessing.cpu_count()
 CELERY_TASK_TIME_LIMIT      = 300
 CELERY_TASK_SOFT_TIME_LIMIT = 240
 
+# settings.py
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "master_name": "mymaster",
+            "sentinels": [
+                ("127.0.0.1", 26380),
+                ("127.0.0.1", 26381),
+                ("127.0.0.1", 26382),
+            ],
+        },
+    },
+}
+
 
 
 # Password validation
@@ -198,9 +220,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-co'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Bogota'
 
 USE_I18N = True
 
@@ -210,7 +232,28 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'frontend', 'dist'),
+]
+
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:5173',
+)
+
+
+CORS_ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+]
+CORS_ALLOW_CREDENTIALS = True
+
+# Configuración de cookies de sesión/CSRF
+CSRF_COOKIE_NAME = "csrftoken"
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

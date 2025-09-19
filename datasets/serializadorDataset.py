@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.core.validators import FileExtensionValidator
 from .models import MetaData
+from rest_framework.response import Response
+from asgiref.sync import async_to_sync
 
 class DatasetSerializer(serializers.ModelSerializer):
     """
@@ -79,4 +81,26 @@ class DatasetSerializer(serializers.ModelSerializer):
         """
         user = self.context['request'].user
         return MetaData.objects.create(owner=user, **validated_data)
+    
+    def post(self, request, *args, **kwargs):
+        # ... your code to handle the dataset upload ...
+        
+        # After successful upload, send a notification
+        user = request.user
+        if user.is_authenticated:
+            channel_layer = get_channel_layer()
+            message = {
+                'type': 'send_notification',
+                'message': {
+                    'type': 'success',
+                    'text': 'Dataset subido con éxito.',
+                    'title': 'Carga Completa'
+                }
+            }
+            async_to_sync(channel_layer.group_send)(
+                f'user_{user.id}',
+                message
+            )
+        
+        return Response({'status': 'ok'})
 

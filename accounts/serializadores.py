@@ -25,6 +25,19 @@ class LoginSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token['username'] = user.username
         return token
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        # Agrega campos del usuario al payload
+        data.update({
+            'user': {
+                'id':       self.user.id,
+                'username': self.user.username,
+                'email':    self.user.email
+            }
+        })
+        return data
     
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()

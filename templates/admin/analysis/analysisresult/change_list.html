@@ -1,0 +1,14 @@
+{% extends "admin/change_list.html" %} {% block object-tools %} {{ block.super
+}}
+<ul class="object-tools">
+  <li>
+    <a
+      href="{% url 'admin:analysisresult_reporte_rapido' %}"
+      class="button addlink"
+      target="_blank"
+    >
+      Crear reporte rápido
+    </a>
+  </li>
+</ul>
+{% endblock %}

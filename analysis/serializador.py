@@ -6,8 +6,9 @@ sus resultados a través de la API REST.
 """
 import json
 from rest_framework import serializers
-from .models import AnalysisResult, HyperparameterDefinition, MLModel
+from .models import AnalysisResult, HyperparameterDefinition, MLModel, UserAnalysis, MapeoResultado
 from datasets.models import MetaData
+from django.db import transaction
 
 class MLModelSerializer(serializers.ModelSerializer):
 
@@ -28,7 +29,6 @@ def parse_value(value: str, dtype: str):
     if dtype == 'float':
         return float(value.replace(',', '.'))
     return value  # str
-
 
 class LaunchAnalysisSerializer(serializers.ModelSerializer):
     dataset = serializers.PrimaryKeyRelatedField(
@@ -104,17 +104,22 @@ class LaunchAnalysisSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({key: 'Este campo es obligatorio.'})
             raw_inputs[key] = raw_value
 
-            # parseo según dtype
-            if hp.dtype == 'int':
+            # Parsear según dtype
+            if hp.dtype == 'int' or hp.dtype == 'float':
                 try:
-                    val = int(raw_value)
-                except ValueError:
-                    raise serializers.ValidationError({key: 'Debe ser un entero.'})
-            elif hp.dtype == 'float':
-                try:
+                    # Intenta convertir a float primero para manejar 1.0, 2.5, etc.
                     val = float(raw_value.replace(',', '.'))
+                    # Si el tipo esperado es 'int', verifica si el valor es un entero
+                    if hp.dtype == 'int' and val != val.is_integer():
+                        raise ValueError
+                    val = int(val) if hp.dtype == 'int' else val
+
                 except ValueError:
-                    raise serializers.ValidationError({key: 'Debe ser un número decimal.'})
+                    # Si falla la conversión, lanza el error adecuado
+                    if hp.dtype == 'int':
+                        raise serializers.ValidationError({key: 'Debe ser un número entero.'})
+                    else:
+                        raise serializers.ValidationError({key: 'Debe ser un número decimal.'})
             else:  # 'str'
                 val = raw_value
 
@@ -129,12 +134,22 @@ class LaunchAnalysisSerializer(serializers.ModelSerializer):
         status = validated_data.pop('status', 'PENDING')
 
         # 4) Crear el registro sin param_i
-        analysis = AnalysisResult.objects.create(
-            dataset=   validated_data['dataset'],
-            model=     validated_data['model'],
-            parameters=parameters,
-            status=    'PENDING'
-        )
+        user = self.context['request'].user
+
+        # 3) Create AnalysisResult and UserAnalysis atomically
+        with transaction.atomic():
+            analysis = AnalysisResult.objects.create(
+                dataset=validated_data['dataset'],
+                model=validated_data['model'],
+                parameters=parameters,
+                status='PENDING'
+            )
+            
+            # Here's the key addition: creating the UserAnalysis link
+            UserAnalysis.objects.create(
+                user=user,
+                analysis=analysis
+            )
         return analysis
 
 
@@ -175,4 +190,28 @@ class AnalysisResultSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
-    
+class HyperparameterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HyperparameterDefinition
+        fields = ['key_hint', 'position']
+
+class AnalysisResultSerializer(serializers.ModelSerializer):
+    """
+    Serializador para el modelo AnalysisResult.
+    """
+    class Meta:
+        model = AnalysisResult
+        fields = '__all__'
+
+class UserAnalysisSerializer(serializers.ModelSerializer):
+    """
+    Serializador para el modelo UserAnalysis.
+    Muestra los detalles del AnalysisResult asociado.
+    """
+    analysis = AnalysisResultSerializer(read_only=True)
+
+    class Meta:
+        model = UserAnalysis
+        fields = ['id', 'user', 'analysis']
+
+
