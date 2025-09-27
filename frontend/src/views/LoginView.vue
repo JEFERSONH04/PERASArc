@@ -4,6 +4,7 @@ import { loginService } from "@/services/authService";
 import { sessionSetService } from "@/services/sessionService";
 import router from "@/router";
 const loading = ref(false);
+const errorMessage = ref("");
 const formLogin = reactive({
   username: null,
   password: null,
@@ -11,15 +12,20 @@ const formLogin = reactive({
 const login = async (event) => {
   event.preventDefault();
   loading.value = true;
+  errorMessage.value = "";
   try {
     const data = await loginService(formLogin.username, formLogin.password);
-    console.log("...", data);
 
     sessionSetService("access", data.access);
     sessionSetService("username", data.user.username);
     router.push({ path: "/" });
   } catch (error) {
-    console.error("Error al obtener el perfil:", error);
+    if (error.response && error.response.data && error.response.data.message) {
+      errorMessage.value = error.response.data.message; // 3. Asigna el mensaje de error usando .value
+    } else {
+      errorMessage.value =
+        "Credenciales inválidas. Por favor, inténtalo de nuevo."; // 4. Mismo caso, usando .value
+    }
   } finally {
     loading.value = false;
   }
@@ -30,7 +36,7 @@ const login = async (event) => {
   <div class="login_contenedor">
     <div class="image-section">
       <img
-        src="https://picsum.photos/400/400/?image=20"
+        src="/src/assets/images/imagenFormulario.png"
         alt="Imagen de fondo para el login"
       />
     </div>
@@ -62,6 +68,7 @@ const login = async (event) => {
                 id="email"
                 v-model="formLogin.username"
                 placeholder="Nombre de usuario"
+                autocomplete="off"
                 required
               />
             </div>
@@ -71,16 +78,22 @@ const login = async (event) => {
                 id="password"
                 v-model="formLogin.password"
                 placeholder="Contraseña"
+                autocomplete="off"
                 required
               />
             </div>
             <br />
 
-            <button type="submit" class="login-button">Entrar</button>
+            <button type="submit" :disabled="loading" class="login-button">
+              {{ loading ? "Entrando..." : "Entrar" }}
+            </button>
             <p style="text-align: center; padding-top: 20px">
               ¿No tienes cuenta?
               <router-link to="/register">Regístrate aquí</router-link>
             </p>
+            <div v-if="errorMessage" class="error-message">
+              {{ errorMessage }}
+            </div>
           </BForm>
         </BCard>
       </div>
@@ -222,6 +235,13 @@ form {
 
 .forgot-password:hover {
   color: #3b76c8;
+}
+
+.error-message {
+  color: red;
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-align: center; /* o la separación que prefieras */
 }
 
 /* Media Queries para responsividad */

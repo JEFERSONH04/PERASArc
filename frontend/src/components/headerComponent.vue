@@ -1,6 +1,6 @@
 <script>
 export default {
-    methods: {
+  methods: {
     logout() {
       // Remueve el token de acceso del localStorage
       localStorage.removeItem("access");
@@ -18,7 +18,6 @@ export default {
     // Al cargar el componente, leemos el valor del localStorage
     this.username = localStorage.getItem("username");
   },
-
 };
 </script>
 <template>
@@ -36,7 +35,9 @@ export default {
         <strong>Biomol - Biología Molecular y Biotecnología</strong>
       </p>
     </div>
-    <h2>Bienvenido, {{ username }}!</h2>
+    <div class="bienvenida">
+      <h3>Bienvenido, {{ username }}!</h3>
+    </div>
     <div
       style="
         width: 400px;
@@ -88,5 +89,17 @@ p {
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.bienvenida {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (max-width: 768px){
+  .bienvenida {
+    display: none;
+  }
 }
 </style>

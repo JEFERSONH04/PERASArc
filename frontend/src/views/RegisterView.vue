@@ -18,7 +18,6 @@ const register = async (event) => {
       formRegister.email,
       formRegister.password
     );
-    console.log("...", data);
 
     router.push({ path: "/login" });
   } catch (error) {
@@ -33,7 +32,7 @@ const register = async (event) => {
   <div class="register_contenedor">
     <div class="image-section">
       <img
-        src="https://picsum.photos/400/400/?image=20"
+        src="/src/assets/images/imagenFormulario.png"
         alt="Imagen de fondo para el login"
       />
     </div>
@@ -76,7 +75,9 @@ const register = async (event) => {
               required
             />
           </div>
-          <button type="submit" class="register-button">Crear</button>
+          <button type="submit" :disabled="loading" class="register-button">
+            {{ loading ? "Creando..." : "Crear" }}
+          </button>
         </form>
       </div>
     </div>

@@ -1,7 +1,6 @@
 import { API_AUTH } from "@/conf";
 
 export const loginService = async (username, password) => {
-  console.log(username, password);
   const url = API_AUTH + "/login/";
 
   const response = await fetch(url, {

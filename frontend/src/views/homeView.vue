@@ -13,7 +13,11 @@
             <b-form-group>
               <b-form-file v-model="form.file" ref="fileInput"></b-form-file>
               <div class="d-flex justify-content-center mt-3 mb-2">
-                <b-button pill type="submit" variant="primary"
+                <b-button
+                  pill
+                  type="submit"
+                  variant="primary"
+                  style="background-color: #0252a6"
                   >Subir Dataset</b-button
                 >
               </div>
@@ -73,7 +77,12 @@
           </b-form-group>
         </div>
         <div class="d-flex justify-content-center">
-          <b-button type="submit" variant="primary" class="mt-4" pill
+          <b-button
+            type="submit"
+            variant="primary"
+            class="mt-4"
+            pill
+            style="background-color: #0252a6"
             >Realizar Predicción</b-button
           >
         </div>
@@ -81,11 +90,20 @@
     </div>
     <div class="analysis-result-container">
       <h2>Resultados del Análisis</h2>
-      <div v-if="loading" class="loading-state">
-        <p>Cargando resultados...</p>
-      </div>
-      <div v-else-if="error" class="error-state">
-        <p>Error: {{ error }}</p>
+      <div
+        v-if="isProcessing"
+        class="loading-state"
+        style="
+          max-width: 400px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding-top: 50px;
+        "
+      >
+        <h3>
+          <strong>Su resultado se está procesando, espere por favor...</strong>
+        </h3>
       </div>
       <div v-if="latestResult" class="mt-5">
         <b-card no-body class="p-4 custom-card">
@@ -120,10 +138,13 @@
             </b-list-group-item>
           </b-list-group>
           <b-button
-            variant="success"
+            variant="primary"
+            pill
             class="mt-3"
-            @click="downloadResultFile(latestResult.analysis_id)"
-            >Descargar Archivo
+            style="background-color: #0252a6"
+            @click="downloadJson(latestResult)"
+          >
+            <b-icon-download></b-icon-download> Descargar Archivo
           </b-button>
         </b-card>
       </div>
@@ -172,12 +193,8 @@
             <b-col>{{ JSON.stringify(row.item.metrics) }}</b-col>
           </b-row>
           <b-row class="mb-2">
-            <b-col sm="3" class="text-sm-right"><b>Hyperparametros:</b></b-col>
+            <b-col sm="3" class="text-sm-right"><b>Parametros:</b></b-col>
             <b-col>{{ JSON.stringify(row.item.parameters) }}</b-col>
-          </b-row>
-          <b-row class="mb-2">
-            <b-col sm="3" class="text-sm-right"><b>Ruta de Salida:</b></b-col>
-            <b-col>{{ row.item.output_path }}</b-col>
           </b-row>
           <b-row class="mb-2">
             <b-col sm="3" class="text-sm-right"><b>Mensaje de Error:</b></b-col>
@@ -195,6 +212,7 @@
 
 <script setup>
 import { ref, onMounted, watch, computed } from "vue";
+
 import {
   BForm,
   BFormGroup,
@@ -210,7 +228,6 @@ import {
   getAnalysisResults,
   getAnalysisResultById,
   getLastAnalysisId,
-  downloadFile,
 } from "@/services/results";
 import { uploadDataset } from "@/services/datasets";
 import axios from "axios";
@@ -230,19 +247,41 @@ const hyperparameters = ref([]);
 const hyperparameterValues = ref({});
 
 const latestResult = ref(null);
+const isProcessing = ref(false);
 const nextResultId = ref(null);
-
 
 // --- DESCARGA
 
 // La función que se activará al hacer clic en el botón
-const downloadResultFile = async (resultId) => {
-    try {
-        await downloadFile(resultId);
-    } catch (error) {
-        // La función de servicio ya maneja el error.
-        // Puedes agregar una alerta aquí si lo deseas.
-    }
+const downloadJson = (data) => {
+  if (!data) {
+    alert("No hay datos para descargar.");
+    return;
+  }
+
+  // 1. Convierte el objeto JavaScript a una cadena JSON con formato
+  const jsonData = JSON.stringify(data, null, 2);
+
+  // 2. Crea un objeto Blob con el contenido JSON
+  const blob = new Blob([jsonData], { type: "application/json" });
+
+  // 3. Crea una URL temporal para el Blob
+  const url = URL.createObjectURL(blob);
+
+  // 4. Crea un enlace temporal en el DOM
+  const link = document.createElement("a");
+  link.href = url;
+
+  // 5. Establece el nombre del archivo para la descarga
+  link.setAttribute("download", `resultado_${data.id}.json`);
+
+  // 6. Simula un clic en el enlace para iniciar la descarga
+  document.body.appendChild(link);
+  link.click();
+
+  // 7. Limpia el DOM y libera la URL
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 // --- LOGICA DE LA CARGA DE DATASETS
@@ -383,6 +422,7 @@ onMounted(async () => {
 
   loadDatasets();
   loadAndGroupModels();
+  fetchAnalysisResults();
 });
 
 // --- LÓGICA DE ENVÍO DEL FORMULARIO ---
@@ -426,24 +466,75 @@ const submitAnalysis = async () => {
       }
     );
 
+    const lastId = await getLastAnalysisId();
+    nextResultId.value = lastId;
+
+    // Obtener el ID del análisis para identificar la conexión
+    const analysisId = response.data.id;
+    console.log("Análisis enviado con ID:", analysisId);
     console.log("Respuesta del servidor:", response.data);
-    alert("Análisis de tarea enviado con éxito!");
-    fetchAnalysisResults();
-    setTimeout(fetchAnalysisResults, 5000);
+
+    alert("El analisis se envió con exito!");
+
     const analysisIdresult = response.data.id;
     console.log(analysisIdresult);
 
     // 1. Incrementar el ID para la siguiente petición de resultados
     if (nextResultId.value !== null) {
-      nextResultId.value++;
-      // 2. Usar el nuevo ID para obtener el resultado
-      const result = await getAnalysisResultById(nextResultId.value);
-      latestResult.value = result;
+      let success = false;
+      let attempts = 0;
+      const maxAttempts = 5; // Define el número máximo de reintentos
+      const retryInterval = 3000; // Define el intervalo de reintento en milisegundos (3 segundos)
+
+      isProcessing.value = true;
+      latestResult.value = null;
+
+      while (!success && attempts < maxAttempts) {
+        try {
+          // 2. Usar el nuevo ID para obtener el resultado
+          const result = await getAnalysisResultById(nextResultId.value);
+          latestResult.value = result;
+          fetchAnalysisResults();
+          success = true;
+        } catch (error) {
+          // Manejar el error de la petición HTTP
+          if (error.response && error.response.status === 500) {
+            console.log(
+              `Error 500. Reintentando en ${retryInterval / 1000} segundos...`
+            );
+            attempts++;
+            if (attempts < maxAttempts) {
+              // Esperar 'e' segundos antes del próximo reintento
+              await new Promise((resolve) =>
+                setTimeout(resolve, retryInterval)
+              );
+            } else {
+              // Si se excede el número máximo de intentos, se lanza la alerta
+              alert(
+                "No se pudo obtener el ID del resultado después de varios intentos. Por favor, recarga la página."
+              );
+              isProcessing.value = false;
+            }
+          } else {
+            // Si el error no es 500, lanzar una alerta o manejarlo de otra forma
+            alert(
+              "Ocurrió un error inesperado al obtener los resultados. Por favor, recarga la página."
+            );
+            isProcessing.value = false;
+            break; // Salir del bucle para evitar reintentos innecesarios
+          }
+        }
+      }
+      // Si la petición fue exitosa, desactivamos el estado de procesamiento
+      if (success) {
+        isProcessing.value = false;
+      }
     } else {
       // Manejar el caso si no se pudo obtener el último ID al inicio
       alert(
         "No se pudo obtener el ID del resultado. Por favor, recarga la página."
       );
+      isProcessing.value = false;
     }
 
     /*
@@ -513,30 +604,6 @@ const fetchAnalysisResults = async () => {
     console.error("Error fetching analysis results:", error);
   }
 };
-
-onMounted(() => {
-  fetchAnalysisResults();
-
-  //  websocket.onmessage = (event) => {
-  //    const data = JSON.parse(event.data);
-  //    const message = data.message;
-
-  //    switch (message.type) {
-  //      case "success":
-  //        toast.success(message.text);
-  //        if (message.analysis_id) {
-  //          fetchAnalysisResults();
-  //        }
-  //        break;
-  //      case "error":
-  //        toast.error(message.text);
-  //        fetchAnalysisResults();
-  //       break;
-  //      default:
-  //        toast.info(message.text);
-  //    }
-  //  };
-});
 </script>
 <style scoped>
 .table-container,

@@ -1,7 +1,9 @@
 # analysis/tasks.py
-
+import json
 from celery import shared_task
 from django.utils import timezone
+#from asgiref.sync import async_to_sync
+#from channels.layers import get_channel_layer
 from .models import AnalysisResult
 from .ml_inference import execute
 import logging
@@ -42,6 +44,7 @@ def launch_analysis_task(self, analysis_id):
         )
         status = "SUCCESS"
         analysis.completed_at = timezone.now()
+
     except Exception as exc:
                 # Esto vuelca el stack trace en los logs
         logger.exception("Error al ejecutar execute() para AnalysisResult %s", analysis_id)
@@ -55,3 +58,5 @@ def launch_analysis_task(self, analysis_id):
     analysis.output_path = output_path
     analysis.status      = status
     analysis.save(update_fields=["metrics", "output_path", "status", "completed_at", "error_message"])
+
+

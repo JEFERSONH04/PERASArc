@@ -71,7 +71,7 @@ class AnalysisViewSet(viewsets.GenericViewSet):
         ordenados por fecha de creación descendente.
         """
         user = request.user
-        qs = self.queryset.filter(dataset__owner=user).order_by("-created_at")
+        qs = self.queryset.filter(dataset__owner=user).order_by("-created_at")[:10]
         page = self.paginate_queryset(qs)
         if page is not None:
             serializer = AnalysisResultSerializer(page, many=True)
@@ -279,7 +279,7 @@ class UserAnalysisListAPIView(generics.ListAPIView):
         Sobrescribe el queryset para devolver solo los análisis del
         usuario que realiza la solicitud.
         """
-        return self.queryset.filter(user=self.request.user).order_by('-analysis__created_at')
+        return self.queryset.filter(user=self.request.user).order_by('-analysis__created_at')[:1]
 
 class LastUserAnalysisAPIView(generics.RetrieveAPIView):
     """

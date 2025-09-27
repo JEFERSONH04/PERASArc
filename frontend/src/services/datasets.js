@@ -1,5 +1,4 @@
 ///Importar los recursos necesarios
-import { API_BASE } from "@/conf";
 import { sessionGetService } from "./sessionService";
 import axios from "axios";
 

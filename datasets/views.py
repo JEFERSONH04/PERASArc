@@ -38,7 +38,7 @@ class DatasetViewSet(
     serializer_class       = DatasetSerializer
 
     def get_queryset(self):
-        return MetaData.objects.filter(owner=self.request.user)
+        return MetaData.objects.filter(owner=self.request.user).order_by("-created_at")[:10]
     
     
 

@@ -15,6 +15,7 @@ from decouple import config
 import matplotlib
 matplotlib.use('Agg')
 
+
 JWT_ACCESS_TOKEN = config('JWT_ACCESS_TOKEN')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -38,6 +39,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+#    "daphne",
+#    "channels",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -62,7 +65,8 @@ INSTALLED_APPS = [
     "django_celery_beat",
     #Servicio de Analisis
     "analysis",
-    #Canales para mensaajes en tiempo real
+#    'django_eventstream',
+
 ]
 
 MIDDLEWARE = [
@@ -181,20 +185,28 @@ CELERY_WORKER_CONCURRENCY = multiprocessing.cpu_count()
 CELERY_TASK_TIME_LIMIT      = 300
 CELERY_TASK_SOFT_TIME_LIMIT = 240
 
-# settings.py
+# Canal de capas (Channel Layer)
+# Para desarrollo, puedes usar una capa en memoria.
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "master_name": "mymaster",
-            "sentinels": [
-                ("127.0.0.1", 26380),
-                ("127.0.0.1", 26381),
-                ("127.0.0.1", 26382),
-            ],
-        },
-    },
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
 }
+
+# configuracion para produccion
+#CHANNEL_LAYERS = {
+#    "default": {
+#        "BACKEND": "channels_redis.core.RedisChannelLayer",
+#        "CONFIG": {
+#            "master_name": "mymaster",
+#            "sentinels": [
+#                ("127.0.0.1", 26380),
+#                ("127.0.0.1", 26381),
+#                ("127.0.0.1", 26382),
+#            ],
+#        },
+#    },
+#}
 
 
 
