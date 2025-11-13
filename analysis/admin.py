@@ -3,6 +3,7 @@ from django.contrib import admin
 # Register your models here.
 from django.urls import path
 from django.contrib import admin
+from unfold.admin import ModelAdmin as UnfoldModelAdmin  # Renombrar para evitar confusión
 from .models import MLModel, HyperparameterDefinition, AnalysisResult, MapeoResultado, UserAnalysis
 from django.http import HttpResponse
 from .reportes import SimpleReportGenerator
@@ -14,7 +15,7 @@ class HyperparameterInline(admin.TabularInline):
     ordering = ('position',)
 
 @admin.register(MLModel)
-class MLModelAdmin(admin.ModelAdmin):
+class MLModelAdmin(UnfoldModelAdmin):
     list_display    = ('name', 'version', 'framework', 'owner', 'created_at')
     list_filter     = ('framework', 'created_at', 'owner')
     search_fields   = ('name', 'version')
@@ -34,7 +35,7 @@ class MLModelAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 @admin.register(AnalysisResult)
-class AnalysisResultAdmin(admin.ModelAdmin):
+class AnalysisResultAdmin(UnfoldModelAdmin):
     change_list_template = "admin/analysis/analysisresult/change_list.html"
 
     def get_urls(self):
@@ -68,13 +69,13 @@ class AnalysisResultAdmin(admin.ModelAdmin):
         return response
 
 @admin.register(MapeoResultado)
-class MapeoResultadoAdmin(admin.ModelAdmin):
+class MapeoResultadoAdmin(UnfoldModelAdmin):
     list_display = ['model', 'valor_prediccion', 'etiqueta_texto']
     list_filter = ['model']
     search_fields = ['etiqueta_texto']
 
 @admin.register(UserAnalysis)
-class UserAnalysisAdmin(admin.ModelAdmin):
+class UserAnalysisAdmin(UnfoldModelAdmin):
     list_display = ['analysis', 'user']
     list_filter = ['user']
 

@@ -37,10 +37,14 @@ MANUAL_JWT_TOKEN = ""
 
 ALLOWED_HOSTS = ['*']
 
+# settings.py
+
+
 
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -67,6 +71,9 @@ INSTALLED_APPS = [
     "analysis",
 
 ]
+
+# Asegúrate de que, si lo defines, use "unfold"
+DJANGO_ADMIN_SITE = 'unfold.admin.AdminSite'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -260,6 +267,14 @@ CSRF_COOKIE_NAME = "csrftoken"
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SECURE = False
+
+# settings.py
+
+UNFOLD = {
+    "SITE_TITLE": "Mi Panel de Administración",  # Título en la pestaña del navegador
+    "SITE_HEADER": "Arquitectura Web BIOMOL",              # Título grande en el panel
+    "DARK_MODE": False,                        # Habilitar el modo oscuro por defecto
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
