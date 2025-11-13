@@ -1,13 +1,15 @@
 # analysis/tasks.py
 import json
 from celery import shared_task
+from .circuit_breaker import RedisCircuitBreaker, CircuitOpen
 from django.utils import timezone
-#from asgiref.sync import async_to_sync
-#from channels.layers import get_channel_layer
+from django.core.cache import cache
 from .models import AnalysisResult
 from .ml_inference import execute
 import logging
 logger = logging.getLogger(__name__)
+
+execute_breaker = RedisCircuitBreaker(name="execute", max_failures=5, reset_timeout=60)
 
 @shared_task(bind=True)
 def launch_analysis_task(self, analysis_id):
@@ -35,7 +37,8 @@ def launch_analysis_task(self, analysis_id):
 
 
     try:
-        metrics, output_path = execute(
+        wrapped_execute = execute_breaker(execute)
+        metrics, output_path = wrapped_execute(
             model_path=analysis.model.file.path,
             framework=analysis.model.framework,
             dataset_path=analysis.dataset.file.path,
@@ -44,13 +47,18 @@ def launch_analysis_task(self, analysis_id):
         )
         status = "SUCCESS"
         analysis.completed_at = timezone.now()
+    except CircuitOpen:
+        analysis.error_message = "Servicio temporalmente no disponible (Circuit abierto)."
+        status = "FAILURE"
+        metrics, output_path = {}, ""
 
     except Exception as exc:
                 # Esto vuelca el stack trace en los logs
         logger.exception("Error al ejecutar execute() para AnalysisResult %s", analysis_id)
         # Guarda también el mensaje en BD si lo deseas
         analysis.error_message = str(exc)
-        analysis.save(update_fields=['error_message'])
+        analysis.status = "FAILURE"
+        analysis.save(update_fields=['error_message', 'status'])
         # O relanza el error para que Celery lo marque como FAILURE:
         raise
 

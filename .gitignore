@@ -8,5 +8,7 @@ var/models
 preprocessing/test
 pytest.ini
 run_task.py
+secrets.py
+frontend/dist/
 
 .env

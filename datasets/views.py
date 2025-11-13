@@ -28,10 +28,6 @@ class DatasetViewSet(
       - destroy: eliminar dataset propio.
     """
     authentication_classes = [
-        authentication.SessionAuthentication,
-        authentication.BasicAuthentication,
-        # Si usas tokens o JWT, añádelos aquí:
-        authentication.TokenAuthentication,
         JWTAuthentication,
     ]
     permission_classes     = [permissions.IsAuthenticated, IsOwner]

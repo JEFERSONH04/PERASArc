@@ -483,7 +483,7 @@ const submitAnalysis = async () => {
     if (nextResultId.value !== null) {
       let success = false;
       let attempts = 0;
-      const maxAttempts = 5; // Define el número máximo de reintentos
+      const maxAttempts = 500; // Define el número máximo de reintentos
       const retryInterval = 3000; // Define el intervalo de reintento en milisegundos (3 segundos)
 
       isProcessing.value = true;
@@ -536,14 +536,6 @@ const submitAnalysis = async () => {
       );
       isProcessing.value = false;
     }
-
-    /*
-    // Código para el manejo de notificaciones en tiempo real (omitido por ahora)
-    // Para usar esta sección, asegúrate de que tu WebSocket esté configurado y activo
-
-    // websocketService.send({ type: 'start_analysis', data: response.data });
-    // toast.info("Tarea de análisis iniciada. Te notificaremos los resultados en tiempo real.", { timeout: false });
-    */
   } catch (error) {
     console.error(
       "Error al enviar el análisis:",

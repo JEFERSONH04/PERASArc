@@ -20,7 +20,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from django.conf.urls.static import static
 from django.conf import settings
 from analysis.views import HyperparameterListView, UserAnalysisAPIView, UserAnalysisListAPIView, LastUserAnalysisAPIView
-#import django_eventstream
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -34,7 +34,6 @@ urlpatterns = [
     path('analisis/<int:pk>/', UserAnalysisAPIView.as_view(), name='user-analysis-detail'),
     path('analisis/', UserAnalysisListAPIView.as_view(), name='user-analysis-list'),
     path('analisis/ultimo/', LastUserAnalysisAPIView.as_view(), name='last-user-analysis'),
-#    path('events/', include(django_eventstream.urls), { 'channels': ['default'] }),
 ]
 
 if settings.DEBUG:

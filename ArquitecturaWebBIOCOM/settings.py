@@ -25,22 +25,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+from .secrets import SECRET_KEY
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=vt05=lb!lbb!)xp+!a=j$=ph@-m&v1j2x-vot4&btc4o^zco+'
+SECRET_KEY = SECRET_KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 MANUAL_JWT_TOKEN = "" 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 
 INSTALLED_APPS = [
-#    "daphne",
-#    "channels",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -65,7 +65,6 @@ INSTALLED_APPS = [
     "django_celery_beat",
     #Servicio de Analisis
     "analysis",
-#    'django_eventstream',
 
 ]
 
@@ -101,7 +100,6 @@ SIMPLE_JWT = {
   'ROTATE_REFRESH_TOKENS': True,
   'BLACKLIST_AFTER_ROTATION': True,
   'AUTH_HEADER_TYPES': ('Bearer','JWT'),    # prefijos aceptados
-  # 'ALGORITHM': 'HS256', 'SIGNING_KEY': SECRET_KEY, …  
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -133,10 +131,23 @@ ASGI_APPLICATION = 'ArquitecturaWebBIOCOM.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': BASE_DIR / 'db.sqlite3',
+#    }
+#}
+
+# settings.py
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'BIOMOL_DB',         # El nombre de la DB que creaste en Postgres
+        'USER': 'postgres',     # El usuario de Postgres
+        'PASSWORD': '2pOmswHIWnOwVbSc',     # La contraseña del usuario
+        'HOST': 'localhost',             # O la IP/host de tu servidor Postgres
+        'PORT': '5432',                  # Puerto por defecto de Postgres
     }
 }
 
@@ -185,28 +196,7 @@ CELERY_WORKER_CONCURRENCY = multiprocessing.cpu_count()
 CELERY_TASK_TIME_LIMIT      = 300
 CELERY_TASK_SOFT_TIME_LIMIT = 240
 
-# Canal de capas (Channel Layer)
-# Para desarrollo, puedes usar una capa en memoria.
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
 
-# configuracion para produccion
-#CHANNEL_LAYERS = {
-#    "default": {
-#        "BACKEND": "channels_redis.core.RedisChannelLayer",
-#        "CONFIG": {
-#            "master_name": "mymaster",
-#            "sentinels": [
-#                ("127.0.0.1", 26380),
-#                ("127.0.0.1", 26381),
-#                ("127.0.0.1", 26382),
-#            ],
-#        },
-#    },
-#}
 
 
 
@@ -258,6 +248,10 @@ CORS_ORIGIN_WHITELIST = (
 
 CORS_ALLOWED_ORIGINS = [
   'http://localhost:5173',
+  "http://localhost",  # Origen cuando accedes a Nginx localmente
+    "http://127.0.0.1",
+    # Agrega aquí la URL de producción (tu dominio real)
+    # Ejemplo: "https://tudominio.com",
 ]
 CORS_ALLOW_CREDENTIALS = True
 

@@ -80,7 +80,7 @@ class AnalysisViewSet(viewsets.GenericViewSet):
         serializer = AnalysisResultSerializer(qs, many=True)
         return Response(serializer.data)
 
-    def retrieve(self, request):
+    def retrieve(self, request, pk=None):
         """
         Recupera un análisis específico asegurando que el usuario
         sea el dueño del dataset subyacente.
@@ -279,7 +279,7 @@ class UserAnalysisListAPIView(generics.ListAPIView):
         Sobrescribe el queryset para devolver solo los análisis del
         usuario que realiza la solicitud.
         """
-        return self.queryset.filter(user=self.request.user).order_by('-analysis__created_at')[:1]
+        return self.queryset.filter(user=self.request.user).order_by('-analysis__created_at')[:10]
 
 class LastUserAnalysisAPIView(generics.RetrieveAPIView):
     """
