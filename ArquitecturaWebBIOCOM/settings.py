@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-from .secrets import SECRET_KEY
+from .secrets import SECRET_KEY, DB_USER, DB_PORT, DB_HOST, DB_NAME, DB_PASSWORD
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = SECRET_KEY
@@ -150,11 +150,11 @@ ASGI_APPLICATION = 'ArquitecturaWebBIOCOM.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'BIOMOL_DB',         # El nombre de la DB que creaste en Postgres
-        'USER': 'postgres',     # El usuario de Postgres
-        'PASSWORD': '2pOmswHIWnOwVbSc',     # La contraseña del usuario
-        'HOST': 'localhost',             # O la IP/host de tu servidor Postgres
-        'PORT': '5432',                  # Puerto por defecto de Postgres
+        'NAME': DB_NAME, 
+        'USER': DB_USER,     
+        'PASSWORD': DB_PASSWORD,    
+        'HOST': DB_HOST,            
+        'PORT': DB_PORT,                 
     }
 }
 
